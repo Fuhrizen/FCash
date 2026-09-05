@@ -18,3 +18,12 @@ include = [
 
 [properties]
 author = "Fuhrizen"
+
+[signing]
+authority = "fuhrizen"
+version = 3
+
+[hemtt.release]
+folder = "Fuhrizens_Cash"
+sign = true
+archive = false

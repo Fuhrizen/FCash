@@ -298,6 +298,42 @@ if not re.search(r'\[\s*1\s*,', export_txt):
 if '(_state select 0) != 1' not in import_txt:
     errors.append('Persistence import does not require schema version 1')
 
+# 25. Release signing configuration and secret exclusions.
+import tomllib
+project_cfg = tomllib.loads((ROOT / '.hemtt' / 'project.toml').read_text(encoding='utf-8'))
+signing_cfg = project_cfg.get('signing', {})
+release_cfg = project_cfg.get('hemtt', {}).get('release', {})
+if signing_cfg.get('authority') != 'fuhrizen':
+    errors.append('HEMTT signing authority must be fuhrizen')
+if signing_cfg.get('version') != 3:
+    errors.append('HEMTT signing version must be 3')
+if release_cfg.get('sign') is not True:
+    errors.append('HEMTT release signing must be enabled')
+if release_cfg.get('archive') is not False:
+    errors.append('Docker release workflow expects HEMTT archive creation to be disabled')
+for rel in ['.gitignore', '.dockerignore']:
+    txt = (ROOT / rel).read_text(encoding='utf-8')
+    if '*.hemttprivatekey' not in txt:
+        errors.append(f'{rel} does not exclude HEMTT private keys')
+
+compose_txt = (ROOT / 'docker-compose.yml').read_text(encoding='utf-8')
+compose_services = re.findall(r'^  ([A-Za-z0-9_-]+):\s*$', compose_txt, re.M)
+if compose_services != ['build']:
+    errors.append(f'Docker Compose must expose exactly one service named build, got: {compose_services}')
+if 'source: .' not in compose_txt or 'target: /workspace' not in compose_txt:
+    errors.append('Docker build service does not mount the repository at /workspace')
+if 'FCASH_HEMTT_MODE' in compose_txt:
+    errors.append('Docker Compose still contains the removed build/release mode split')
+
+build_script = (ROOT / 'docker' / 'fcash-build.sh').read_text(encoding='utf-8')
+if 'hemtt keys generate' in build_script or 'hemttprivatekey' in build_script:
+    errors.append('Docker release builder contains interactive/private-key bootstrap logic')
+for required in ['python3 tools/static_check.py', 'hemtt release', 'SHA256SUMS.txt']:
+    if required not in build_script:
+        errors.append(f'Docker release builder is missing required step: {required}')
+if 'git status --porcelain' not in build_script:
+    errors.append('Docker release builder does not reject uncommitted release source')
+
 print(f'FCash static check: {len(errors)} error(s), {len(warnings)} warning(s)')
 print(f'  functions: {len(declared)} declared / {len(files)} files')
 print(f'  server operations: {len(server_ops)}')

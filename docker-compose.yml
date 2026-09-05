@@ -11,6 +11,11 @@ services:
         HEMTT_SHA256: ${HEMTT_SHA256:-3ace226eac57bf80203ee40b28a67320d4abecba24e0ddb8c5ed1dcfeb1f46f3}
     volumes:
       - type: bind
+        source: .
+        target: /workspace
+        bind:
+          selinux: Z
+      - type: bind
         source: ./dist
         target: /output
         bind:

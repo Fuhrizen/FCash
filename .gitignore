@@ -7,5 +7,6 @@ releases/
 Thumbs.db
 
 dist/
-.hemttprivatekey
+*.hemttprivatekey
 *.biprivatekey
+.signing/

@@ -1,6 +1,6 @@
 # Fuhrizen's Cash
 
-Fuhrizen's Cash is a multiplayer cash and banking addon for Arma 3 authored by **Fuhrizen**.
+Fuhrizen's Cash is a multiplayer cash and banking addon for Arma 3 authored by **Fuhrizen**. The public scripting namespace is `FCash`.
 
 The addon provides server-authoritative wallets, personal bank accounts, shared accounts, cash stashes, bank terminals, 3DEN authoring tools, ACE interactions, and live Zeus administration.
 
@@ -37,38 +37,29 @@ The addon provides server-authoritative wallets, personal bank accounts, shared 
 
 ## Build
 
-### Docker
-
-From the repository root:
+The Docker workflow has one service and produces the complete signed release. From the repository root:
 
 ```bash
 docker compose run --rm --build build
 ```
 
-Built PBO files are copied to:
+The build container performs the release checks, runs the FCash static validator, executes `hemtt release`, verifies that signed PBO/BISIGN/BIKEY output exists, and copies the release tree to `dist/`. It also writes `dist/SHA256SUMS.txt` for the signed release files.
 
-```text
-dist/
-```
+`--rm` removes the build container when the command exits. Docker may keep the built image in its local cache; remove that separately with `docker compose down --rmi local` if required.
 
-If `dist/` is not writable, remove the directory and run the build again.
+Release signing uses a reusable HEMTT private key. Complete the one-time setup in [docs/SIGNING.md](docs/SIGNING.md) before the first signed build. The private key is mounted read-only and is never copied into the image.
 
-To rebuild the Docker image without cache:
-
-```bash
-docker compose build --no-cache
-docker compose run --rm build
-```
+The builder also mounts `.git` read-only and refuses to sign a release when the working tree contains uncommitted changes.
 
 The included Dockerfile pins HEMTT `1.21.0`.
 
-### HEMTT
+For direct local use without Docker, the equivalent HEMTT command is:
 
 ```bash
-hemtt build
+hemtt release
 ```
 
-HEMTT writes its build output under `.hemttout/build`.
+See [docs/SIGNING.md](docs/SIGNING.md) for signing-key setup and handling.
 
 ## Configuration
 

@@ -4,3 +4,6 @@
 dist
 releases
 *.zip
+*.hemttprivatekey
+*.biprivatekey
+.signing/
